@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 min-h-screen text-foreground;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
