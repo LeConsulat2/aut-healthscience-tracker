@@ -7,17 +7,12 @@ import {
   X,
   CheckCircle
 } from "lucide-react";
-///// 아래 추가됨
-import { TOTAL_GRADUATION_POINTS_NURSING } from "@/programmes/nursing/constants";
 
 const PASSING_GRADES = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'P'];
 const FAILING_GRADES = ['C-', 'D+', 'D', 'D-', 'F'];
 
 const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement => {
-  const { courses, programmeName } = programmeData;
-
-  ///// totalPoints는 이제 고정값 사용
-  const totalPoints = TOTAL_GRADUATION_POINTS_NURSING;
+  const { courses, programmeName, totalPoints } = programmeData;
 
   const [courseStatuses, setCourseStatuses] = useState<CourseStatusType[]>(() =>
     courses.map(course => ({
@@ -117,8 +112,7 @@ const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement 
       }
     });
     setCurrentTotalPoints(achievedPoints);
-    ///// 기준값을 직접 쓰도록 변경
-    setProgressPercentage((achievedPoints / TOTAL_GRADUATION_POINTS_NURSING) * 100);
+    setProgressPercentage((achievedPoints / totalPoints) * 100);
   }, [courseStatuses, customCourses, courses]);
 
   const resetSheet = (): void => {
