@@ -7,15 +7,18 @@ import {
   X,
   CheckCircle
 } from "lucide-react";
+///// 아래 추가됨
+import { TOTAL_GRADUATION_POINTS_NURSING } from "@/programmes/nursing/constants";
 
-// 성적 등급 상수 (PDF 업로드 기능을 위해 유지)
 const PASSING_GRADES = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'P'];
 const FAILING_GRADES = ['C-', 'D+', 'D', 'D-', 'F'];
 
 const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement => {
-  const { courses, totalPoints, programmeName } = programmeData;
+  const { courses, programmeName } = programmeData;
 
-  // 미리 정의된 코스들의 상태 먼저 체크하기
+  ///// totalPoints는 이제 고정값 사용
+  const totalPoints = TOTAL_GRADUATION_POINTS_NURSING;
+
   const [courseStatuses, setCourseStatuses] = useState<CourseStatusType[]>(() =>
     courses.map(course => ({
       code: course.code,
@@ -23,24 +26,17 @@ const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement 
     }))
   );
 
-  // Manually 추가 된 Custom courses들
   const [customCourses, setCustomCourses] = useState<CustomCourse[]>([]);
-
-  // Manually 추가된 Form 상태
   const [manualCourseCode, setManualCourseCode] = useState('');
   const [manualCourseName, setManualCourseName] = useState('');
   const [manualCoursePoints, setManualCoursePoints] = useState('');
-
-  // track total points and progress percentage
   const [currentTotalPoints, setCurrentTotalPoints] = useState<number>(0);
   const [progressPercentage, setProgressPercentage] = useState<number>(0);
 
-  // 코스 status를 업데이트하는 함수 (토글 방식)
   const updateCourseStatus = useCallback((courseCode: string) => {
     setCourseStatuses(prevStatuses =>
       prevStatuses.map(course => {
         if (course.code === courseCode) {
-          // 토글: passed이면 not-started로, not-started면 passed로
           return {
             ...course,
             status: course.status === 'passed' ? 'not-started' : 'passed'
@@ -51,7 +47,6 @@ const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement 
     );
   }, []);
 
-  // 커스텀 코스 상태 업데이트 함수
   const updateCustomCourseStatus = useCallback((index: number) => {
     setCustomCourses(prevCourses =>
       prevCourses.map((course, i) => {
@@ -66,7 +61,6 @@ const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement 
     );
   }, []);
 
-  // 수동으로 입력한 코스를 추가하는 함수
   const handleAddCustomCourse = (event: React.FormEvent) => {
     event.preventDefault();
     const points = Number(manualCoursePoints);
@@ -77,7 +71,6 @@ const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement 
       );
 
       if (existingCustomCourseIndex !== -1) {
-        // 기존 커스텀 코스 업데이트
         setCustomCourses(prevCourses =>
           prevCourses.map((course, index) =>
             index === existingCustomCourseIndex
@@ -86,7 +79,6 @@ const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement 
           )
         );
       } else {
-        // 새로운 커스텀 코스 추가
         setCustomCourses(prevCourses => [
           ...prevCourses,
           {
@@ -99,7 +91,6 @@ const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement 
         ]);
       }
 
-      // Form 초기화
       setManualCourseCode('');
       setManualCourseName('');
       setManualCoursePoints('');
@@ -108,98 +99,61 @@ const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement 
     }
   };
 
-  // 커스텀 코스를 제거하는 함수
   const handleRemoveCustomCourse = (index: number): void => {
     setCustomCourses(prevCourses => prevCourses.filter((_, i) => i !== index));
   };
 
-  // 전체 포인트와 진행율을 계산하는 Effect
   useEffect(() => {
     let achievedPoints = 0;
-
-    // 기본 코스들의 포인트 계산
     courses.forEach(course => {
       const status = courseStatuses.find(s => s.code === course.code);
       if (status?.status === 'passed') {
         achievedPoints += course.points;
       }
     });
-
-    // 커스텀 코스들의 포인트 계산
     customCourses.forEach(course => {
       if (course.status === 'passed') {
         achievedPoints += course.points;
       }
     });
-
     setCurrentTotalPoints(achievedPoints);
-    setProgressPercentage((achievedPoints / totalPoints) * 100);
-  }, [courseStatuses, customCourses, courses, totalPoints]);
+    ///// 기준값을 직접 쓰도록 변경
+    setProgressPercentage((achievedPoints / TOTAL_GRADUATION_POINTS_NURSING) * 100);
+  }, [courseStatuses, customCourses, courses]);
 
-  // 모든 진행률을 리셋하는 함수
   const resetSheet = (): void => {
-    if (
-      window.confirm(
-        'Are you sure you want to reset all progress? This action cannot be undone.'
-      )
-    ) {
-      setCourseStatuses(
-        courses.map(course => ({ code: course.code, status: 'not-started' as const }))
-      );
+    if (window.confirm('Are you sure you want to reset all progress? This action cannot be undone.')) {
+      setCourseStatuses(courses.map(course => ({ code: course.code, status: 'not-started' as const })));
       setCustomCourses([]);
     }
   };
 
-  /**
-   * 클립보드에서 데이터를 붙여넣어 코스 상태를 업데이트하는 함수
-   * 예상 형식: Code | Course Name | Grade | Points
-   */
   const pasteData = (event: React.ClipboardEvent<HTMLTextAreaElement>): void => {
     try {
       const pastedText = event.clipboardData.getData('text');
       const rows = pastedText.split('\n').filter(row => row.trim() !== '');
-
       const updatedCourseStatuses = [...courseStatuses];
       const updatedCustomCourses = [...customCourses];
 
       rows.forEach(row => {
-        const [code, courseName, grade, pointsStr] = row
-          .split('\t')
-          .map(s => s.trim());
+        const [code, courseName, grade, pointsStr] = row.split('\t').map(s => s.trim());
         if (!code || !grade) return;
 
         const points = Number(pointsStr) || 0;
-        const status = PASSING_GRADES.includes(grade)
-          ? ('passed' as const)
-          : ('not-started' as const);
-
-        // 미리 정의된 코스인지 확인
-        const courseIndex = updatedCourseStatuses.findIndex(
-          cs => cs.code === code
-        );
+        const status = PASSING_GRADES.includes(grade) ? ('passed' as const) : ('not-started' as const);
+        const courseIndex = updatedCourseStatuses.findIndex(cs => cs.code === code);
         if (courseIndex !== -1) {
-          updatedCourseStatuses[courseIndex] = {
-            ...updatedCourseStatuses[courseIndex],
-            status
-          };
+          updatedCourseStatuses[courseIndex] = { ...updatedCourseStatuses[courseIndex], status };
         } else {
-          // 커스텀 코스 처리
-          const customCourseIndex = updatedCustomCourses.findIndex(
-            c => c.code === code
-          );
+          const customCourseIndex = updatedCustomCourses.findIndex(c => c.code === code);
           if (customCourseIndex !== -1) {
-            // 기존 커스텀 코스 업데이트
             updatedCustomCourses[customCourseIndex] = {
               ...updatedCustomCourses[customCourseIndex],
               status,
               ...(courseName && { name: courseName }),
-              points:
-                points > 0
-                  ? points
-                  : updatedCustomCourses[customCourseIndex].points
+              points: points > 0 ? points : updatedCustomCourses[customCourseIndex].points
             };
           } else if (courseName && points > 0) {
-            // 새로운 커스텀 코스 추가
             updatedCustomCourses.push({ code, name: courseName, points, status, isCustom: true });
           }
         }
@@ -209,19 +163,16 @@ const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement 
       setCustomCourses(updatedCustomCourses);
     } catch (err) {
       console.error("Error pasting data:", err);
-      alert(
-        'Could not paste data. Please check clipboard permissions and ensure your data is in the correct format (tab-separated): Code | Course Name | Grade | Points'
-      );
+      alert('Could not paste data. Please check clipboard permissions and ensure your data is in the correct format (tab-separated): Code | Course Name | Grade | Points');
     }
   };
 
-  // 패스한 모든 코스들 (필수 + 커스텀)
   const passedCourses = [
-    ...courses.filter(course =>
-      courseStatuses.find(s => s.code === course.code)?.status === 'passed'
-    ),
+    ...courses.filter(course => courseStatuses.find(s => s.code === course.code)?.status === 'passed'),
     ...customCourses.filter(course => course.status === 'passed')
   ];
+
+
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -475,3 +426,30 @@ const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement 
 };
 
 export default ProgressTracker;
+
+
+
+
+
+// 전체 포인트와 진행율을 계산하는 Effect
+//   useEffect(() => {
+//     let achievedPoints = 0;
+
+//     // 기본 코스들의 포인트 계산
+//     courses.forEach(course => {
+//       const status = courseStatuses.find(s => s.code === course.code);
+//       if (status?.status === 'passed') {
+//         achievedPoints += course.points;
+//       }
+//     });
+
+//     // 커스텀 코스들의 포인트 계산
+//     customCourses.forEach(course => {
+//       if (course.status === 'passed') {
+//         achievedPoints += course.points;
+//       }
+//     });
+
+//     setCurrentTotalPoints(achievedPoints);
+//     setProgressPercentage((achievedPoints / totalPoints) * 100);
+//   }, [courseStatuses, customCourses, courses, totalPoints]);
