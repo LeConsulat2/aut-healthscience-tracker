@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="antialiased scroll-smooth">
-        {/* 당신 스타일의 Navbar */}
+       
         <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-indigo-900 via-purple-900 to-pink-800 shadow-lg">
           <div className="container mx-auto px-4 h-16 flex items-center justify-between">
             <div className="flex items-center space-x-2">

@@ -36,5 +36,3 @@ export const AUT_OCCUPATIONAL_THERAPY_COURSE_REQUIREMENTS: Course[] = [
   ];
   
   export const TOTAL_GRADUATION_POINTS_OT = 360;
-  export const PASSING_GRADES_OT = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C'];
-  export const FAILING_GRADES_OT = ['D', 'F', 'W'];
