@@ -31,17 +31,31 @@ const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement 
   const [manualCourseName, setManualCourseName] = useState('');
   const [manualCoursePoints, setManualCoursePoints] = useState('');
 
-  ///// ADDED: track total points and progress percentage
-  const [currentTotalPoints, setCurrentTotalPoints] = useState<number>(0); ///// added
-  const [progressPercentage, setProgressPercentage] = useState<number>(0); ///// added
+  // track total points and progress percentage
+  const [currentTotalPoints, setCurrentTotalPoints] = useState<number>(0);
+  const [progressPercentage, setProgressPercentage] = useState<number>(0);
 
   // 코스 status를 업데이트하는 함수 (토글 방식)
-  // @params {string} courseCode - 업데이트할 코스의 코드
   const updateCourseStatus = useCallback((courseCode: string) => {
     setCourseStatuses(prevStatuses =>
       prevStatuses.map(course => {
         if (course.code === courseCode) {
           // 토글: passed이면 not-started로, not-started면 passed로
+          return {
+            ...course,
+            status: course.status === 'passed' ? 'not-started' : 'passed'
+          };
+        }
+        return course;
+      })
+    );
+  }, []);
+
+  // 커스텀 코스 상태 업데이트 함수
+  const updateCustomCourseStatus = useCallback((index: number) => {
+    setCustomCourses(prevCourses =>
+      prevCourses.map((course, i) => {
+        if (i === index) {
           return {
             ...course,
             status: course.status === 'passed' ? 'not-started' : 'passed'
@@ -103,17 +117,24 @@ const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement 
   useEffect(() => {
     let achievedPoints = 0;
 
-    ///// CHANGED: iterate both predefined and custom courses
-    [...courses, ...customCourses].forEach(course => { ///// modified line
+    // 기본 코스들의 포인트 계산
+    courses.forEach(course => {
       const status = courseStatuses.find(s => s.code === course.code);
       if (status?.status === 'passed') {
         achievedPoints += course.points;
       }
     });
 
+    // 커스텀 코스들의 포인트 계산
+    customCourses.forEach(course => {
+      if (course.status === 'passed') {
+        achievedPoints += course.points;
+      }
+    });
+
     setCurrentTotalPoints(achievedPoints);
     setProgressPercentage((achievedPoints / totalPoints) * 100);
-  }, [courseStatuses, customCourses, totalPoints]);
+  }, [courseStatuses, customCourses, courses, totalPoints]);
 
   // 모든 진행률을 리셋하는 함수
   const resetSheet = (): void => {
@@ -260,7 +281,194 @@ const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement 
           </div>
         </div>
 
-        {/* …rest of JSX remains unchanged… */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 왼쪽: 필수 코스 목록 */}
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Required Courses</h2>
+            <div className="space-y-3">
+              {courses.map((course) => {
+                const status = courseStatuses.find(s => s.code === course.code);
+                const isPassed = status?.status === 'passed';
+                
+                return (
+                  <div
+                    key={course.code}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                      isPassed
+                        ? 'border-green-500 bg-green-50 shadow-md'
+                        : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm'
+                    }`}
+                    onClick={() => updateCourseStatus(course.code)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <CheckCircle
+                            className={`w-6 h-6 ${
+                              isPassed ? 'text-green-500' : 'text-gray-300'
+                            }`}
+                          />
+                          <div>
+                            <h3 className={`font-semibold ${
+                              isPassed ? 'text-green-800' : 'text-gray-800'
+                            }`}>
+                              {course.code}
+                            </h3>
+                            <p className={`text-sm ${
+                              isPassed ? 'text-green-600' : 'text-gray-600'
+                            }`}>
+                              {course.name}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className={`text-lg font-bold ${
+                        isPassed ? 'text-green-600' : 'text-gray-500'
+                      }`}>
+                        {course.points} pts
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 오른쪽: 커스텀 코스 및 통계 */}
+          <div className="space-y-6">
+            {/* 커스텀 코스 추가 폼 */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Add Custom Course</h2>
+              <form onSubmit={handleAddCustomCourse} className="space-y-4">
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Course Code (e.g., NURS101)"
+                    value={manualCourseCode}
+                    onChange={(e) => setManualCourseCode(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Course Name"
+                    value={manualCourseName}
+                    onChange={(e) => setManualCourseName(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    placeholder="Points"
+                    value={manualCoursePoints}
+                    onChange={(e) => setManualCoursePoints(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  Add Course
+                </button>
+              </form>
+            </div>
+
+            {/* 커스텀 코스 목록 */}
+            {customCourses.length > 0 && (
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Custom Courses</h2>
+                <div className="space-y-3">
+                  {customCourses.map((course, index) => (
+                    <div
+                      key={`custom-${index}`}
+                      className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                        course.status === 'passed'
+                          ? 'border-green-500 bg-green-50 shadow-md'
+                          : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div 
+                          className="flex-1 cursor-pointer"
+                          onClick={() => updateCustomCourseStatus(index)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <CheckCircle
+                              className={`w-6 h-6 ${
+                                course.status === 'passed' ? 'text-green-500' : 'text-gray-300'
+                              }`}
+                            />
+                            <div>
+                              <h3 className={`font-semibold ${
+                                course.status === 'passed' ? 'text-green-800' : 'text-gray-800'
+                              }`}>
+                                {course.code}
+                              </h3>
+                              <p className={`text-sm ${
+                                course.status === 'passed' ? 'text-green-600' : 'text-gray-600'
+                              }`}>
+                                {course.name}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-lg font-bold ${
+                            course.status === 'passed' ? 'text-green-600' : 'text-gray-500'
+                          }`}>
+                            {course.points} pts
+                          </span>
+                          <button
+                            onClick={() => handleRemoveCustomCourse(index)}
+                            className="text-red-500 hover:text-red-700 p-1"
+                            title="Remove course"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 통계 */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Statistics</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {courseStatuses.filter(s => s.status === 'passed').length + customCourses.filter(c => c.status === 'passed').length}
+                  </div>
+                  <div className="text-sm text-blue-800">Courses Completed</div>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">
+                    {currentTotalPoints}
+                  </div>
+                  <div className="text-sm text-green-800">Points Earned</div>
+                </div>
+                <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {courses.length + customCourses.length - (courseStatuses.filter(s => s.status === 'passed').length + customCourses.filter(c => c.status === 'passed').length)}
+                  </div>
+                  <div className="text-sm text-yellow-800">Remaining Courses</div>
+                </div>
+                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {totalPoints - currentTotalPoints}
+                  </div>
+                  <div className="text-sm text-purple-800">Points Needed</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
