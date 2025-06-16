@@ -1,449 +1,333 @@
 "use client";
-import { CourseStatusType, CustomCourse, ProgressTrackerProps } from "../programmes/types";
 import { ReactElement, useCallback, useState, useEffect } from "react";
+import { CourseStatusType, CustomCourse, ProgressTrackerProps } from "../programmes/types";
 import {
   GraduationCap,
   Plus,
   X,
   CheckCircle
 } from "lucide-react";
+import { Document, pdfjs } from "react-pdf"; // npm i react-pdf
 
-const PASSING_GRADES = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'P'];
-const FAILING_GRADES = ['C-', 'D+', 'D', 'D-', 'F'];
-
-const ProgressTracker = ({ programmeData }: ProgressTrackerProps): ReactElement => {
-  const { courses, programmeName, totalPoints } = programmeData;
-
-  const [courseStatuses, setCourseStatuses] = useState<CourseStatusType[]>(() =>
-    courses.map(course => ({
-      code: course.code,
-      status: 'not-started' as const
-    }))
-  );
-
-  const [customCourses, setCustomCourses] = useState<CustomCourse[]>([]);
-  const [manualCourseCode, setManualCourseCode] = useState('');
-  const [manualCourseName, setManualCourseName] = useState('');
-  const [manualCoursePoints, setManualCoursePoints] = useState('');
-  const [currentTotalPoints, setCurrentTotalPoints] = useState<number>(0);
-  const [progressPercentage, setProgressPercentage] = useState<number>(0);
-
-  const updateCourseStatus = useCallback((courseCode: string) => {
-    setCourseStatuses(prevStatuses =>
-      prevStatuses.map(course => {
-        if (course.code === courseCode) {
-          return {
-            ...course,
-            status: course.status === 'passed' ? 'not-started' : 'passed'
-          };
-        }
-        return course;
-      })
-    );
-  }, []);
-
-  const updateCustomCourseStatus = useCallback((index: number) => {
-    setCustomCourses(prevCourses =>
-      prevCourses.map((course, i) => {
-        if (i === index) {
-          return {
-            ...course,
-            status: course.status === 'passed' ? 'not-started' : 'passed'
-          };
-        }
-        return course;
-      })
-    );
-  }, []);
-
-  const handleAddCustomCourse = (event: React.FormEvent) => {
-    event.preventDefault();
-    const points = Number(manualCoursePoints);
-
-    if ((manualCourseCode || manualCourseName) && points > 0) {
-      const existingCustomCourseIndex = customCourses.findIndex(
-        course => course.code === manualCourseCode
-      );
-
-      if (existingCustomCourseIndex !== -1) {
-        setCustomCourses(prevCourses =>
-          prevCourses.map((course, index) =>
-            index === existingCustomCourseIndex
-              ? { ...course, name: manualCourseName, points }
-              : course
-          )
-        );
-      } else {
-        setCustomCourses(prevCourses => [
-          ...prevCourses,
-          {
-            code: manualCourseCode,
-            name: manualCourseName,
-            points,
-            status: 'not-started',
-            isCustom: true
-          }
-        ]);
-      }
-
-      setManualCourseCode('');
-      setManualCourseName('');
-      setManualCoursePoints('');
-    } else {
-      alert('Please enter a valid course code and points (points must be greater than 0).');
+// transcript upload component (inline)
+function TranscriptUpload({
+  onDetect
+}: {
+  onDetect: (fullText: string) => void;
+}): ReactElement {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const data = await file.arrayBuffer();
+    const pdf = await pdfjs.getDocument({ data }).promise;
+    let text = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(item => item.str).join(" ") + "\n";
     }
+    onDetect(text);
   };
-
-  const handleRemoveCustomCourse = (index: number): void => {
-    setCustomCourses(prevCourses => prevCourses.filter((_, i) => i !== index));
-  };
-
-  useEffect(() => {
-    let achievedPoints = 0;
-    courses.forEach(course => {
-      const status = courseStatuses.find(s => s.code === course.code);
-      if (status?.status === 'passed') {
-        achievedPoints += course.points;
-      }
-    });
-    customCourses.forEach(course => {
-      if (course.status === 'passed') {
-        achievedPoints += course.points;
-      }
-    });
-    setCurrentTotalPoints(achievedPoints);
-    setProgressPercentage((achievedPoints / totalPoints) * 100);
-  }, [courseStatuses, customCourses, courses]);
-
-  const resetSheet = (): void => {
-    if (window.confirm('Are you sure you want to reset all progress? This action cannot be undone.')) {
-      setCourseStatuses(courses.map(course => ({ code: course.code, status: 'not-started' as const })));
-      setCustomCourses([]);
-    }
-  };
-
-  const pasteData = (event: React.ClipboardEvent<HTMLTextAreaElement>): void => {
-    try {
-      const pastedText = event.clipboardData.getData('text');
-      const rows = pastedText.split('\n').filter(row => row.trim() !== '');
-      const updatedCourseStatuses = [...courseStatuses];
-      const updatedCustomCourses = [...customCourses];
-
-      rows.forEach(row => {
-        const [code, courseName, grade, pointsStr] = row.split('\t').map(s => s.trim());
-        if (!code || !grade) return;
-
-        const points = Number(pointsStr) || 0;
-        const status = PASSING_GRADES.includes(grade) ? ('passed' as const) : ('not-started' as const);
-        const courseIndex = updatedCourseStatuses.findIndex(cs => cs.code === code);
-        if (courseIndex !== -1) {
-          updatedCourseStatuses[courseIndex] = { ...updatedCourseStatuses[courseIndex], status };
-        } else {
-          const customCourseIndex = updatedCustomCourses.findIndex(c => c.code === code);
-          if (customCourseIndex !== -1) {
-            updatedCustomCourses[customCourseIndex] = {
-              ...updatedCustomCourses[customCourseIndex],
-              status,
-              ...(courseName && { name: courseName }),
-              points: points > 0 ? points : updatedCustomCourses[customCourseIndex].points
-            };
-          } else if (courseName && points > 0) {
-            updatedCustomCourses.push({ code, name: courseName, points, status, isCustom: true });
-          }
-        }
-      });
-
-      setCourseStatuses(updatedCourseStatuses);
-      setCustomCourses(updatedCustomCourses);
-    } catch (err) {
-      console.error("Error pasting data:", err);
-      alert('Could not paste data. Please check clipboard permissions and ensure your data is in the correct format (tab-separated): Code | Course Name | Grade | Points');
-    }
-  };
-
-  const passedCourses = [
-    ...courses.filter(course => courseStatuses.find(s => s.code === course.code)?.status === 'passed'),
-    ...customCourses.filter(course => course.status === 'passed')
-  ];
-
-
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-7xl mx-auto">
-        {/* 헤더 */}
-        <div className="flex items-center justify-between mb-6">
+    <input
+      type="file"
+      accept="application/pdf"
+      onChange={handleFile}
+      className="mb-4"
+    />
+  );
+}
+
+const PASSING_GRADES = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "P"];
+const FAILING_GRADES = ["D", "DNC", "DNS", "F", "W"];
+
+const ProgressTracker = ({
+  programmeData
+}: ProgressTrackerProps): ReactElement => {
+  const { courses, programmeName, totalPoints } = programmeData;
+
+  // state
+  const [courseStatuses, setCourseStatuses] = useState<CourseStatusType[]>(
+    () =>
+      courses.map((c) => ({
+        code: c.code,
+        status: "not-started"
+      }))
+  );
+  const [customCourses, setCustomCourses] = useState<CustomCourse[]>([]);
+  const [manualCode, setManualCode] = useState("");
+  const [manualName, setManualName] = useState("");
+  const [manualPoints, setManualPoints] = useState("");
+  const [currentTotalPoints, setCurrentTotalPoints] = useState(0);
+  const [progressPercentage, setProgressPercentage] = useState(0);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // toggle built-in course
+  const updateCourseStatus = useCallback((code: string) => {
+    setCourseStatuses((prev) =>
+      prev.map((r) =>
+        r.code === code
+          ? { ...r, status: r.status === "passed" ? "not-started" : "passed" }
+          : r
+      )
+    );
+  }, []);
+
+  // toggle custom
+  const updateCustomStatus = useCallback((idx: number) => {
+    setCustomCourses((prev) =>
+      prev.map((c, i) =>
+        i === idx
+          ? { ...c, status: c.status === "passed" ? "not-started" : "passed" }
+          : c
+      )
+    );
+  }, []);
+
+  // add custom
+  const handleAddCustom = (e: React.FormEvent) => {
+    e.preventDefault();
+    const pts = Number(manualPoints);
+    if ((manualCode || manualName) && pts > 0) {
+      setCustomCourses((prev) => [
+        ...prev,
+        { code: manualCode, name: manualName, points: pts, status: "not-started", isCustom: true }
+      ]);
+      setManualCode("");
+      setManualName("");
+      setManualPoints("");
+    } else {
+      alert("Enter valid code, name, and points>0");
+    }
+  };
+
+  // reset
+  const handleResetConfirmed = () => {
+    setCourseStatuses(
+      courses.map((c) => ({ code: c.code, status: "not-started" }))
+    );
+    setCustomCourses([]);
+    setShowResetConfirm(false);
+  };
+
+  // recalc points
+  useEffect(() => {
+    let total = 0;
+    courseStatuses.forEach((r) => {
+      if (r.status === "passed") {
+        const c = courses.find((c) => c.code === r.code)!;
+        total += c.points;
+      }
+    });
+    customCourses.forEach((c) => {
+      if (c.status === "passed") total += c.points;
+    });
+    setCurrentTotalPoints(total);
+    setProgressPercentage((total / totalPoints) * 100);
+  }, [courseStatuses, customCourses, courses, totalPoints]);
+
+  // transcript parsing
+  const handleTranscript = (rawText: string) => {
+    // build best-grade map
+    const map = new Map<string, { name: string; grade: string }>();
+    rawText.split("\n").forEach((line) => {
+      const m = line.match(
+        /(HEAL|NURS|PHMY|HLAW|MAOH|HPRM|PSYC)\d{3}\s+(.+?)\s+([A-F][+\-]?|P|W)/i
+      );
+      if (m) {
+        const [_, code, name, grade] = m;
+        if (!map.has(code) || PASSING_GRADES.includes(grade)) {
+          map.set(code, { name, grade });
+        }
+      }
+    });
+
+    // apply
+    setCourseStatuses((prev) => {
+      const copy = [...prev];
+      for (const [code, { grade }] of map) {
+        const idx = copy.findIndex((r) => r.code === code);
+        if (idx >= 0) {
+          copy[idx] = {
+            ...copy[idx],
+            status: PASSING_GRADES.includes(grade) ? "passed" : "not-started"
+          };
+        }
+      }
+      return copy;
+    });
+    // also handle unknown codes → custom
+    map.forEach(({ name, grade }, code) => {
+      const exists = courses.some((c) => c.code === code);
+      if (!exists && PASSING_GRADES.includes(grade)) {
+        setCustomCourses((prev) => [
+          ...prev,
+          { code, name, points: 0, status: "passed", isCustom: true }
+        ]);
+      }
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* HEADER */}
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <GraduationCap className="w-8 h-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-900">{programmeName} Progress Tracker</h1>
+            <h1 className="text-2xl font-bold">{programmeName} Progress</h1>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={resetSheet}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-              Reset All Progress
-            </button>
-            <textarea
-              placeholder="Paste course data here (tab-separated: Code | Name | Grade | Points)"
-              onPaste={pasteData}
-              rows={1}
-              className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-80"
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+          >
+            Reset All
+          </button>
+        </div>
+
+        {/* TRANSCRIPT UPLOAD */}
+        <TranscriptUpload onDetect={handleTranscript} />
+
+        {/* PROGRESS BAR */}
+        <div className="bg-white p-4 rounded shadow">
+          <div className="flex justify-between">
+            <span>Overall Progress</span>
+            <span className="font-bold">
+              {currentTotalPoints} / {totalPoints} pts
+            </span>
+          </div>
+          <div className="bg-gray-200 h-3 rounded overflow-hidden mt-2">
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all"
+              style={{ width: `${Math.min(progressPercentage, 100)}%` }}
             />
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">Overall Progress</h2>
-            <span className="text-2xl font-bold text-blue-600">
-              {currentTotalPoints} / {totalPoints} Points
-            </span>
-          </div>
-
-          <div className="w-full bg-gray-200 rounded-full h-6 mb-4">
-            <div
-              className="bg-gradient-to-r from-blue-500 to-green-500 h-6 rounded-full transition-all duration-500 ease-out flex items-center justify-end pr-2"
-              style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-            >
-              {progressPercentage > 10 && (
-                <span className="text-white text-sm font-semibold">
-                  {Math.round(progressPercentage)}%
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="text-center">
-            {progressPercentage >= 100 ? (
-              <p className="text-green-600 text-lg font-semibold">🎉 Congratulations! You are eligible to graduate!</p>
-            ) : (
-              <p className="text-gray-600">
-                {Math.round(progressPercentage)}% Complete • {totalPoints - currentTotalPoints} points remaining
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* 왼쪽: 필수 코스 목록 */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Required Courses</h2>
-            <div className="space-y-3">
-              {courses.map((course) => {
-                const status = courseStatuses.find(s => s.code === course.code);
-                const isPassed = status?.status === 'passed';
-                
-                return (
-                  <div
-                    key={course.code}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                      isPassed
-                        ? 'border-green-500 bg-green-50 shadow-md'
-                        : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm'
-                    }`}
-                    onClick={() => updateCourseStatus(course.code)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                          <CheckCircle
-                            className={`w-6 h-6 ${
-                              isPassed ? 'text-green-500' : 'text-gray-300'
-                            }`}
-                          />
-                          <div>
-                            <h3 className={`font-semibold ${
-                              isPassed ? 'text-green-800' : 'text-gray-800'
-                            }`}>
-                              {course.code}
-                            </h3>
-                            <p className={`text-sm ${
-                              isPassed ? 'text-green-600' : 'text-gray-600'
-                            }`}>
-                              {course.name}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className={`text-lg font-bold ${
-                        isPassed ? 'text-green-600' : 'text-gray-500'
-                      }`}>
-                        {course.points} pts
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 오른쪽: 커스텀 코스 및 통계 */}
-          <div className="space-y-6">
-            {/* 커스텀 코스 추가 폼 */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Add Custom Course</h2>
-              <form onSubmit={handleAddCustomCourse} className="space-y-4">
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Course Code (e.g., NURS101)"
-                    value={manualCourseCode}
-                    onChange={(e) => setManualCourseCode(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Course Name"
-                    value={manualCourseName}
-                    onChange={(e) => setManualCourseName(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="number"
-                    placeholder="Points"
-                    value={manualCoursePoints}
-                    onChange={(e) => setManualCoursePoints(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+        {/* COURSES */}
+        <div className="grid sm:grid-cols-2 gap-6">
+          {/* Required Courses */}
+          <div className="bg-white p-4 rounded shadow space-y-2">
+            <h2 className="font-semibold">Required Courses</h2>
+            {courses.map((c) => {
+              const s = courseStatuses.find((r) => r.code === c.code)!;
+              return (
+                <div
+                  key={c.code}
+                  onClick={() => updateCourseStatus(c.code)}
+                  className={`flex items-center justify-between p-2 rounded cursor-pointer ${
+                    s.status === "passed"
+                      ? "bg-green-50"
+                      : "hover:bg-gray-100"
+                  }`}
                 >
-                  <Plus className="w-5 h-5" />
-                  Add Course
-                </button>
-              </form>
-            </div>
-
-            {/* 커스텀 코스 목록 */}
-            {customCourses.length > 0 && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">Custom Courses</h2>
-                <div className="space-y-3">
-                  {customCourses.map((course, index) => (
-                    <div
-                      key={`custom-${index}`}
-                      className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-                        course.status === 'passed'
-                          ? 'border-green-500 bg-green-50 shadow-md'
-                          : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm'
+                  <div className="flex items-center gap-2">
+                    <CheckCircle
+                      className={`${
+                        s.status === "passed" ? "text-green-500" : "text-gray-300"
                       }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div 
-                          className="flex-1 cursor-pointer"
-                          onClick={() => updateCustomCourseStatus(index)}
-                        >
-                          <div className="flex items-center gap-3">
-                            <CheckCircle
-                              className={`w-6 h-6 ${
-                                course.status === 'passed' ? 'text-green-500' : 'text-gray-300'
-                              }`}
-                            />
-                            <div>
-                              <h3 className={`font-semibold ${
-                                course.status === 'passed' ? 'text-green-800' : 'text-gray-800'
-                              }`}>
-                                {course.code}
-                              </h3>
-                              <p className={`text-sm ${
-                                course.status === 'passed' ? 'text-green-600' : 'text-gray-600'
-                              }`}>
-                                {course.name}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-lg font-bold ${
-                            course.status === 'passed' ? 'text-green-600' : 'text-gray-500'
-                          }`}>
-                            {course.points} pts
-                          </span>
-                          <button
-                            onClick={() => handleRemoveCustomCourse(index)}
-                            className="text-red-500 hover:text-red-700 p-1"
-                            title="Remove course"
-                          >
-                            <X className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    />
+                    <span>{c.code}</span>
+                  </div>
+                  <span>{c.points} pts</span>
                 </div>
+              );
+            })}
+          </div>
+
+          {/* Custom & Add */}
+          <div className="space-y-4">
+            <form
+              onSubmit={handleAddCustom}
+              className="bg-white p-4 rounded shadow space-y-2"
+            >
+              <h2 className="font-semibold">Add Custom Course</h2>
+              <input
+                className="w-full border p-2 rounded"
+                placeholder="Code"
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+              />
+              <input
+                className="w-full border p-2 rounded"
+                placeholder="Name"
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+              />
+              <input
+                className="w-full border p-2 rounded"
+                placeholder="Points"
+                type="number"
+                value={manualPoints}
+                onChange={(e) => setManualPoints(e.target.value)}
+              />
+              <button className="w-full bg-blue-500 text-white p-2 rounded">
+                <Plus className="inline-block mr-1" />
+                Add
+              </button>
+            </form>
+            {customCourses.length > 0 && (
+              <div className="bg-white p-4 rounded shadow space-y-2">
+                <h2 className="font-semibold">Custom Courses</h2>
+                {customCourses.map((c, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2 rounded hover:bg-gray-100"
+                  >
+                    <div
+                      className="flex items-center gap-2 cursor-pointer"
+                      onClick={() => updateCustomStatus(i)}
+                    >
+                      <CheckCircle
+                        className={`${
+                          c.status === "passed"
+                            ? "text-green-500"
+                            : "text-gray-300"
+                        }`}
+                      />
+                      <span>{c.code}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span>{c.points} pts</span>
+                      <X
+                        className="cursor-pointer text-red-500"
+                        onClick={() => handleRemoveCustomCourse(i)}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-
-            {/* 통계 */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Statistics</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {courseStatuses.filter(s => s.status === 'passed').length + customCourses.filter(c => c.status === 'passed').length}
-                  </div>
-                  <div className="text-sm text-blue-800">Courses Completed</div>
-                </div>
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">
-                    {currentTotalPoints}
-                  </div>
-                  <div className="text-sm text-green-800">Points Earned</div>
-                </div>
-                <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                  <div className="text-2xl font-bold text-yellow-600">
-                    {courses.length + customCourses.length - (courseStatuses.filter(s => s.status === 'passed').length + customCourses.filter(c => c.status === 'passed').length)}
-                  </div>
-                  <div className="text-sm text-yellow-800">Remaining Courses</div>
-                </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">
-                    {totalPoints - currentTotalPoints}
-                  </div>
-                  <div className="text-sm text-purple-800">Points Needed</div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
+
+      {/* RESET CONFIRM MODAL */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow-lg space-y-4 max-w-xs w-full">
+            <h3 className="text-lg font-bold">Reset All Progress?</h3>
+            <p>This will clear all your passed flags. Cannot be undone.</p>
+            <div className="flex gap-3">
+              <button
+                className="flex-1 bg-gray-200 p-2 rounded"
+                onClick={() => setShowResetConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 bg-red-600 text-white p-2 rounded"
+                onClick={handleResetConfirmed}
+              >
+                Yes, Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default ProgressTracker;
-
-
-
-
-
-// 전체 포인트와 진행율을 계산하는 Effect
-//   useEffect(() => {
-//     let achievedPoints = 0;
-
-//     // 기본 코스들의 포인트 계산
-//     courses.forEach(course => {
-//       const status = courseStatuses.find(s => s.code === course.code);
-//       if (status?.status === 'passed') {
-//         achievedPoints += course.points;
-//       }
-//     });
-
-//     // 커스텀 코스들의 포인트 계산
-//     customCourses.forEach(course => {
-//       if (course.status === 'passed') {
-//         achievedPoints += course.points;
-//       }
-//     });
-
-//     setCurrentTotalPoints(achievedPoints);
-//     setProgressPercentage((achievedPoints / totalPoints) * 100);
-//   }, [courseStatuses, customCourses, courses, totalPoints]);
