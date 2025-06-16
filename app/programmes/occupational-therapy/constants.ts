@@ -1,3 +1,5 @@
+import { Course } from "../types";
+
 export const AUT_OCCUPATIONAL_THERAPY_COURSE_REQUIREMENTS: Course[] = [
     // Level 5 – Part I
     { code: 'MAOH501', name: 'Hauora Māori', level: 5, points: 15, pathway: 'Part I' },
