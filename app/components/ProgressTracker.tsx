@@ -43,6 +43,7 @@ function TranscriptUpload({
       setUploadStatus(`✓ Processed ${pdf.numPages} pages successfully!`);
       setTimeout(() => setUploadStatus(""), 3000);
     } catch (error) {
+      console.error("Error processing PDF:", error);
       setUploadStatus("❌ Error processing PDF");
       setTimeout(() => setUploadStatus(""), 3000);
     }
