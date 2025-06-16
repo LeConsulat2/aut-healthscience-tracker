@@ -4,15 +4,15 @@ import { CourseStatusType, CustomCourse, ProgressTrackerProps } from "../program
 import {
   GraduationCap,
   Plus,
-  X,
   CheckCircle,
-  Upload,
   FileText,
   RotateCcw,
   Trash2,
   CloudUpload
 } from "lucide-react";
-import { Document, pdfjs } from "react-pdf";
+import { pdfjs } from "react-pdf";
+
+import type { TextItem } from "pdfjs-dist/types/src/display/api";
 
 // Enhanced transcript upload component
 function TranscriptUpload({
@@ -37,7 +37,7 @@ function TranscriptUpload({
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
-        text += content.items.map((item: any) => item.str).join(" ") + "\n";
+        text += content.items.map((item) => (item as TextItem).str).join(" ") + "\n";
       }
       onDetect(text);
       setUploadStatus(`✓ Processed ${pdf.numPages} pages successfully!`);
