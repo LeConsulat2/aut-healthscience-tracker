@@ -23,7 +23,7 @@ export default function Programmes() {
   const slugify = (name: string) => name.toLowerCase().replace(/\s+/g, "-");
 
   // Framer Motion을 위한 Variants(애니메이션 상태)를 정의합니다.
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -35,7 +35,7 @@ export default function Programmes() {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,
