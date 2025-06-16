@@ -4,13 +4,13 @@
 interface PromiseWithResolvers<T> {
     promise: Promise<T>;
     resolve: (value: T | PromiseLike<T>) => void;
-    reject: (reason?: any) => void;
+    reject: (reason?: unknown) => void;
   }
   
   // Promise 인터페이스 확장
   declare global {
     interface PromiseConstructor {
-      withResolvers<T = any>(): PromiseWithResolvers<T>;
+      withResolvers<T = unknown>(): PromiseWithResolvers<T>;
     }
   }
   
@@ -19,7 +19,7 @@ interface PromiseWithResolvers<T> {
     if (!Promise.withResolvers) {
       Promise.withResolvers = function<T>(): PromiseWithResolvers<T> {
         let resolve!: (value: T | PromiseLike<T>) => void;
-        let reject!: (reason?: any) => void;
+        let reject!: (reason?: unknown) => void;
         
         const promise = new Promise<T>((res, rej) => {
           resolve = res;
@@ -37,6 +37,6 @@ interface PromiseWithResolvers<T> {
   
     // Apply to global scope if available (Node.js)
     if (typeof global !== 'undefined' && !global.Promise.withResolvers) {
-      (global as any).Promise.withResolvers = Promise.withResolvers;
+      (global as typeof globalThis).Promise.withResolvers = Promise.withResolvers;
     }
   }
