@@ -26,10 +26,10 @@ function TranscriptUpload({
 
   const handleFile = async (file: File) => {
     if (!file) return;
-    
+
     setIsProcessing(true);
     setUploadStatus("Processing PDF...");
-    
+
     try {
       const data = await file.arrayBuffer();
       const pdf = await pdfjs.getDocument({ data }).promise;
@@ -42,11 +42,11 @@ function TranscriptUpload({
       onDetect(text);
       setUploadStatus(`✓ Processed ${pdf.numPages} pages successfully!`);
       setTimeout(() => setUploadStatus(""), 3000);
-    } catch (error) {
+    } catch (_error) {
       setUploadStatus("❌ Error processing PDF");
       setTimeout(() => setUploadStatus(""), 3000);
     }
-    
+
     setIsProcessing(false);
   };
 
@@ -90,7 +90,7 @@ function TranscriptUpload({
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           disabled={isProcessing}
         />
-        
+
         <div className="text-center">
           <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             {isProcessing ? (
@@ -99,15 +99,15 @@ function TranscriptUpload({
               <CloudUpload className="w-8 h-8 text-blue-600" />
             )}
           </div>
-          
+
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             Upload Academic Transcript
           </h3>
-          
+
           <p className="text-sm text-gray-600 mb-4">
             Drag and drop your PDF transcript here, or click to browse
           </p>
-          
+
           <div className="flex items-center justify-center space-x-4 text-xs text-gray-500">
             <span className="flex items-center">
               <FileText className="w-4 h-4 mr-1" />
@@ -116,7 +116,7 @@ function TranscriptUpload({
             <span>•</span>
             <span>Max 10MB</span>
           </div>
-          
+
           {uploadStatus && (
             <div className="mt-4 text-sm font-medium">
               {uploadStatus}
@@ -129,7 +129,6 @@ function TranscriptUpload({
 }
 
 const PASSING_GRADES = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "P"];
-const FAILING_GRADES = ["D", "DNC", "DNS", "F", "W"];
 
 const ProgressTracker = ({
   programmeData
@@ -229,7 +228,9 @@ const ProgressTracker = ({
         /(HEAL|NURS|PHMY|HLAW|MAOH|HPRM|PSYC)\d{3}\s+(.+?)\s+([A-F][+\-]?|P|W)/i
       );
       if (m) {
-        const [_, code, name, grade] = m;
+        const code = m[1] + m[2]; // Combine course prefix and number
+        const name = m[3];
+        const grade = m[4];
         if (!map.has(code) || PASSING_GRADES.includes(grade)) {
           map.set(code, { name, grade });
           console.log(code, name, grade);
@@ -265,7 +266,6 @@ const ProgressTracker = ({
 
   const passedCourses = courseStatuses.filter(c => c.status === "passed").length;
   const passedCustomCourses = customCourses.filter(c => c.status === "passed").length;
-  const totalCourses = courses.length + customCourses.length;
   const totalPassedCourses = passedCourses + passedCustomCourses;
 
   return (
@@ -343,7 +343,7 @@ const ProgressTracker = ({
                 {passedCourses} / {courses.length} completed
               </div>
             </div>
-            
+
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {courses.map((c) => {
                 const s = courseStatuses.find((r) => r.code === c.code)!;
@@ -418,7 +418,7 @@ const ProgressTracker = ({
                     onChange={(e) => setManualPoints(e.target.value)}
                   />
                 </div>
-                <button 
+                <button
                   onClick={handleAddCustom}
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                 >
@@ -437,7 +437,7 @@ const ProgressTracker = ({
                     {passedCustomCourses} / {customCourses.length} completed
                   </div>
                 </div>
-                
+
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {customCourses.map((c, i) => (
                     <div
@@ -520,7 +520,6 @@ const ProgressTracker = ({
 };
 
 export default ProgressTracker;
-
 
 
 // 전체 포인트와 진행율을 계산하는 Effect
