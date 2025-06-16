@@ -1,4 +1,4 @@
-// app/programmes/nursing/page.tsx
+// app/programmes/OccupationalTherapy/page.tsx
 
 import ProgressTracker from "@/components/ProgressTracker";
 import { AUT_OCCUPATIONAL_THERAPY_COURSE_REQUIREMENTS, TOTAL_GRADUATION_POINTS_OT  } from "./constants";
