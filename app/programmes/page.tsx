@@ -27,6 +27,8 @@ export default function Programmes() {
     visible: {
       opacity: 1,
       transition: {
+        type: "spring",
+        stiffness: 100,
         staggerChildren: 0.1,
       },
     },
