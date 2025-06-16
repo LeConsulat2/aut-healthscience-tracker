@@ -42,7 +42,7 @@ function TranscriptUpload({
       onDetect(text);
       setUploadStatus(`✓ Processed ${pdf.numPages} pages successfully!`);
       setTimeout(() => setUploadStatus(""), 3000);
-    } catch (_error) {
+    } catch (error) {
       setUploadStatus("❌ Error processing PDF");
       setTimeout(() => setUploadStatus(""), 3000);
     }
