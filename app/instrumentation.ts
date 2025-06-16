@@ -1,8 +1,7 @@
 // instrumentation.ts - This file should be in your PROJECT ROOT (same level as package.json)
-// NOT in the app/ folder
 export async function register() {
-    if (typeof globalThis !== 'undefined' && !Promise.withResolvers) {
-      // @ts-expect-error - Promise.withResolvers is not available in Node.js < 22
+    // Apply polyfill to global Promise
+    if (!Promise.withResolvers) {
       Promise.withResolvers = function() {
         let resolve, reject;
         const promise = new Promise((res, rej) => {
@@ -11,5 +10,15 @@ export async function register() {
         });
         return { promise, resolve, reject };
       };
+    }
+  
+    // Also apply to globalThis if available
+    if (typeof globalThis !== 'undefined' && !globalThis.Promise.withResolvers) {
+      globalThis.Promise.withResolvers = Promise.withResolvers;
+    }
+  
+    // Apply to global scope if available (Node.js)
+    if (typeof global !== 'undefined' && !global.Promise.withResolvers) {
+      global.Promise.withResolvers = Promise.withResolvers;
     }
   }
