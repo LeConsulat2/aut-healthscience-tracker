@@ -1,13 +1,31 @@
 // instrumentation.ts - This file should be in your PROJECT ROOT (same level as package.json)
-export async function register() {
+
+// Promise.withResolvers 타입 정의
+interface PromiseWithResolvers<T> {
+    promise: Promise<T>;
+    resolve: (value: T | PromiseLike<T>) => void;
+    reject: (reason?: any) => void;
+  }
+  
+  // Promise 인터페이스 확장
+  declare global {
+    interface PromiseConstructor {
+      withResolvers<T = any>(): PromiseWithResolvers<T>;
+    }
+  }
+  
+  export async function register() {
     // Apply polyfill to global Promise
     if (!Promise.withResolvers) {
-      Promise.withResolvers = function() {
-        let resolve, reject;
-        const promise = new Promise((res, rej) => {
+      Promise.withResolvers = function<T>(): PromiseWithResolvers<T> {
+        let resolve!: (value: T | PromiseLike<T>) => void;
+        let reject!: (reason?: any) => void;
+        
+        const promise = new Promise<T>((res, rej) => {
           resolve = res;
           reject = rej;
         });
+        
         return { promise, resolve, reject };
       };
     }
@@ -19,6 +37,6 @@ export async function register() {
   
     // Apply to global scope if available (Node.js)
     if (typeof global !== 'undefined' && !global.Promise.withResolvers) {
-      global.Promise.withResolvers = Promise.withResolvers;
+      (global as any).Promise.withResolvers = Promise.withResolvers;
     }
   }
