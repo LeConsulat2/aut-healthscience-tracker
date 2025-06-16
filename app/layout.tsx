@@ -2,16 +2,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import type { Metadata } from 'next';
+// import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 import { Button } from './components/ui/button';
 import './globals.css';
 
-export const metadata: Metadata = {
-  title: 'AUT Health Science Progress Tracker',
-  description: 'Track your academic progress at AUT Health Sciences.',
-};
+// export const metadata: Metadata = {
+//   title: 'AUT Health Science Progress Tracker',
+//   description: 'Track your academic progress at AUT Health Sciences.',
+// };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
