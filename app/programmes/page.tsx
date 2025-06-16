@@ -2,6 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import type {Variants} from "framer-motion";
 import { 
   HeartPulse, Stethoscope, Users, Ambulance, Brain, 
   Baby, Atom, Home 
