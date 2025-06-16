@@ -5,6 +5,7 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  telemetry: false,
 };
 
 module.exports = nextConfig;
