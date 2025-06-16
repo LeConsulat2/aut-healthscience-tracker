@@ -232,6 +232,7 @@ const ProgressTracker = ({
         const [_, code, name, grade] = m;
         if (!map.has(code) || PASSING_GRADES.includes(grade)) {
           map.set(code, { name, grade });
+          console.log(code, name, grade);
         }
       }
     });

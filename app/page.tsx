@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GraduationCap, TrendingUp, Users, Award } from "lucide-react";
+import { GraduationCap, TrendingUp } from "lucide-react";
 import { Button } from "./components/ui/button";
 import {
   Card,

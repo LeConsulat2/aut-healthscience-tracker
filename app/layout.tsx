@@ -8,7 +8,7 @@ import { Menu, X } from 'lucide-react';
 import { Button } from './components/ui/button';
 import './globals.css';
 
-const metadata: Metadata = {
+export const metadata: Metadata = {
   title: 'AUT Health Science Progress Tracker',
   description: 'Track your academic progress at AUT Health Sciences.',
 };
