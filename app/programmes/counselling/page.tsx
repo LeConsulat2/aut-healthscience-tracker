@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback, type ReactElement } from 'react';
 import { CheckCircle, XCircle, Plus, AlertCircle, GraduationCap } from 'lucide-react';
 import {
-    AUT_OCCUPATIONAL_THERAPY_COURSE_REQUIREMENTS,    
-    TOTAL_GRADUATION_POINTS_OT,
+    AUT_COUNSELLING_COURSE_REQUIREMENTS,    
+    TOTAL_GRADUATION_POINTS_COUNSELLING,
     type Course,
     
-  } from '@/programmes/occupational-therapy/constants';
+  } from '@/programmes/counselling/constants';
   import {PASSING_GRADES,
     FAILING_GRADES} from '@/programmes/constants'
 
@@ -32,7 +32,7 @@ import {
  
     // State for tracking status of pre-defined AUT courses
     const [courseStatuses, setCourseStatuses] = useState<CourseStatusType[]>(() =>
-      AUT_OCCUPATIONAL_THERAPY_COURSE_REQUIREMENTS.map(course => ({
+      AUT_COUNSELLING_COURSE_REQUIREMENTS.map(course => ({
         code: course.code,
         status: 'not-started' as const,
         attempts: 0
@@ -179,7 +179,7 @@ import {
       let totalPoints = 0;
   
       // Calculate points from required courses
-      AUT_OCCUPATIONAL_THERAPY_COURSE_REQUIREMENTS.forEach(course => {
+      AUT_COUNSELLING_COURSE_REQUIREMENTS.forEach(course => {
         const status = courseStatuses.find(s => s.code === course.code);
         if (status?.status === 'passed') {
           totalPoints += course.points;
@@ -195,10 +195,10 @@ import {
   
       setCurrentTotalPoints(totalPoints);
   
-      if (totalPoints >= TOTAL_GRADUATION_POINTS_OT) {
+      if (totalPoints >= TOTAL_GRADUATION_POINTS_COUNSELLING) {
         setGraduationStatus('🎉 You are eligible to graduate!');
       } else {
-        setGraduationStatus(`You need ${TOTAL_GRADUATION_POINTS_OT - totalPoints} more points to graduate.`);
+        setGraduationStatus(`You need ${TOTAL_GRADUATION_POINTS_COUNSELLING - totalPoints} more points to graduate.`);
       }
     }, [courseStatuses, customCourses]);
   
@@ -208,7 +208,7 @@ import {
     const resetSheet = (): void => {
       if (window.confirm('Are you sure you want to reset all progress? This action cannot be undone.')) {
         setCourseStatuses(
-          AUT_OCCUPATIONAL_THERAPY_COURSE_REQUIREMENTS.map((course) => ({
+          AUT_COUNSELLING_COURSE_REQUIREMENTS.map((course) => ({
             code: course.code,
             status: 'not-started' as const,
             attempts: 0
@@ -319,9 +319,9 @@ import {
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Your Progress Summary</h2>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-gray-700 font-medium">Total Points Achieved:</span>
-                <span className="text-blue-600 text-xl font-bold">{currentTotalPoints} / {TOTAL_GRADUATION_POINTS_OT}</span>
+                <span className="text-blue-600 text-xl font-bold">{currentTotalPoints} / {TOTAL_GRADUATION_POINTS_COUNSELLING}</span>
               </div>
-              <p className={`text-lg font-semibold ${currentTotalPoints >= TOTAL_GRADUATION_POINTS_OT ? 'text-green-600' : 'text-orange-500'}`}>
+              <p className={`text-lg font-semibold ${currentTotalPoints >= TOTAL_GRADUATION_POINTS_COUNSELLING ? 'text-green-600' : 'text-orange-500'}`}>
                 {graduationStatus}
               </p>
             </div>
@@ -372,9 +372,9 @@ import {
     
           {/* Main Course Requirements Section */}
           <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 flex-grow">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">AUT Nursing Curriculum ({AUT_OCCUPATIONAL_THERAPY_COURSE_REQUIREMENTS.reduce((sum, course) => sum + course.points, 0)} points)</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">AUT Counselling Curriculum ({AUT_COUNSELLING_COURSE_REQUIREMENTS.reduce((sum, course) => sum + course.points, 0)} points)</h2>
             <div className="space-y-2 max-h-[70vh] overflow-y-auto custom-scroll">
-              {AUT_OCCUPATIONAL_THERAPY_COURSE_REQUIREMENTS.map((course) => {
+              {AUT_COUNSELLING_COURSE_REQUIREMENTS.map((course) => {
                 const statusEntry = courseStatuses.find(s => s.code === course.code) || { status: 'not-started', attempts: 0 };
                 const { status, attempts } = statusEntry;
   

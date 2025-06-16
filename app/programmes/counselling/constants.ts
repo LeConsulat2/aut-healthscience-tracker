@@ -7,7 +7,7 @@ export interface Course {
     pathway: string;
   }
   
-  export const AUT_NURSING_COURSE_REQUIREMENTS: Course[] = [
+  export const AUT_COUNSELLING_COURSE_REQUIREMENTS: Course[] = [
     { code: 'HEAL504', name: 'Lifespan Development and Communication', level: 5, points: 15, pathway: 'Part I' },
     { code: 'HEAL505', name: 'Health and Environment', level: 5, points: 15, pathway: 'Part I' },
     { code: 'HEAL506', name: 'Human Anatomy and Physiology I', level: 5, points: 15, pathway: 'Part I' },
@@ -33,6 +33,6 @@ export interface Course {
     { code: 'MAOH701', name: 'Māori Health Practice', level: 7, points: 15, pathway: 'Part VI' }
   ];
   
-  export const TOTAL_GRADUATION_POINTS_NURSING = 360;
-  export const PASSING_GRADES_NURSING = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C'];
-  export const FAILING_GRADES_NURSING = ['D', 'F', 'W'];
+  export const TOTAL_GRADUATION_POINTS_COUNSELLING = 360;
+  export const PASSING_GRADES_COUNSELLING = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C'];
+  export const FAILING_GRADES_COUNSELLING = ['D', 'F', 'W'];
