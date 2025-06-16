@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
-import './polyfills.js';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    instrumentationHook: true,
+  },
 };
 
 export default nextConfig;
