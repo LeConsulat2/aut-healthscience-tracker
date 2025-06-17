@@ -131,7 +131,7 @@ function TranscriptUpload({
   );
 }
 
-const PASSING_GRADES = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "P"];
+const PASSING_GRADES = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "P"];
 
 const ProgressTracker = ({
   programmeData
