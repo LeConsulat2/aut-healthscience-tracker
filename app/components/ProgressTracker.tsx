@@ -423,8 +423,10 @@ const ProgressTracker = ({
     </div>
   );
   // End UI Render Section
+}
 
 export default ProgressTracker;
+
 // 전체 포인트와 진행율을 계산하는 Effect
 //   useEffect(() => {
 //     let achievedPoints = 0;
