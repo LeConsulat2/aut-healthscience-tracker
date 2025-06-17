@@ -12,7 +12,13 @@ import {
 } from "lucide-react";
 import { pdfjs } from "react-pdf";
 
-import type { TextItem, PDFDocumentProxy } from "pdfjs-dist/types/src/display/api";
+// Get the PDFDocumentProxy type from react-pdf to ensure consistency
+import type { PDFDocumentProxy } from 'react-pdf';
+
+// Define the part of the TextItem type that we need for our code
+type TextItem = {
+    str: string;
+};
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
@@ -34,6 +40,7 @@ function TranscriptUpload({
 
     try {
       const data = await file.arrayBuffer();
+      // This will now pass type-checking without any issues
       const pdf: PDFDocumentProxy = await pdfjs.getDocument({ data }).promise;
       let text = "";
       for (let i = 1; i <= pdf.numPages; i++) {
@@ -73,7 +80,6 @@ function TranscriptUpload({
   const handleDragLeave = () => {
     setIsDragging(false);
   };
-
   return (
     <div className="w-full">
       <div
