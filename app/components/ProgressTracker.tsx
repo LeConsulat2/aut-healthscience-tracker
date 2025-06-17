@@ -12,17 +12,14 @@ import {
 } from "lucide-react";
 import { pdfjs } from "react-pdf";
 
-// Get the PDFDocumentProxy type from react-pdf to ensure consistency
-import type { PDFDocumentProxy } from 'react-pdf';
+import type { PDFDocumentProxy } from 'pdfjs-dist/types/src/display/api';
 
-// Define the part of the TextItem type that we need for our code
 type TextItem = {
     str: string;
 };
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
-// Enhanced transcript upload component
 function TranscriptUpload({
   onDetect
 }: {
@@ -40,8 +37,7 @@ function TranscriptUpload({
 
     try {
       const data = await file.arrayBuffer();
-      // This will now pass type-checking without any issues
-      const pdf: PDFDocumentProxy = await pdfjs.getDocument({ data }).promise;
+      const pdf = await pdfjs.getDocument({ data }).promise;
       let text = "";
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
