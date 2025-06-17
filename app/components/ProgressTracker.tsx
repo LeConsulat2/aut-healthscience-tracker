@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { pdfjs } from "react-pdf";
 
-import type { TextItem } from "pdfjs-dist/types/src/display/api";
+import type { TextItem, PDFDocumentProxy } from "pdfjs-dist/types/src/display/api";
 
 // Enhanced transcript upload component
 function TranscriptUpload({
@@ -32,7 +32,7 @@ function TranscriptUpload({
 
     try {
       const data = await file.arrayBuffer();
-      const pdf = await pdfjs.getDocument({ data }).promise;
+      const pdf: PDFDocumentProxy = await pdfjs.getDocument({ data }).promise;
       let text = "";
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
@@ -42,7 +42,7 @@ function TranscriptUpload({
       onDetect(text);
       setUploadStatus(`✓ Processed ${pdf.numPages} pages successfully!`);
       setTimeout(() => setUploadStatus(""), 3000);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error processing PDF:", error);
       setUploadStatus("❌ Error processing PDF");
       setTimeout(() => setUploadStatus(""), 3000);
@@ -521,8 +521,6 @@ const ProgressTracker = ({
 };
 
 export default ProgressTracker;
-
-
 // 전체 포인트와 진행율을 계산하는 Effect
 //   useEffect(() => {
 //     let achievedPoints = 0;
