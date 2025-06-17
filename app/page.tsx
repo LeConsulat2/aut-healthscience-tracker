@@ -54,44 +54,4 @@ export default function Home() {
   );
 }
 
-          
-            {/* <div className="grid md:grid-cols-3 gap-6">
-
-              <Card className="bg-background/80 backdrop-blur-xl rounded-2xl p-6 border border-border/20 hover:bg-background/90 transition-all duration-300 transform hover:-translate-y-2">
-                <CardHeader className="p-0 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-primary/90 to-primary/70 rounded-xl flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-white" />
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <h3 className="text-xl font-semibold text-foreground mb-2">Smart Tracking</h3>
-                  <p className="text-muted-foreground">Real-time progress monitoring across all your courses and assignments</p>
-                </CardContent>
-              </Card> */}
-
-              {/* Multi-Programme */}
-              {/* <Card className="bg-background/80 backdrop-blur-xl rounded-2xl p-6 border border-border/20 hover:bg-background/90 transition-all duration-300 transform hover:-translate-y-2 delay-100">
-                <CardHeader className="p-0 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-primary/90 to-primary/70 rounded-xl flex items-center justify-center">
-                    <Users className="w-6 h-6 text-white" />
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <h3 className="text-xl font-semibold text-foreground mb-2">Multi-Programme</h3>
-                  <p className="text-muted-foreground">Support for Nursing, Occupational Therapy, and all health sciences</p>
-                </CardContent>
-              </Card> */}
-
-              {/* Achievement Focus */}
-              {/* <Card className="bg-background/80 backdrop-blur-xl rounded-2xl p-6 border border-border/20 hover:bg-background/90 transition-all duration-300 transform hover:-translate-y-2 delay-200">
-                <CardHeader className="p-0 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-primary/90 to-primary/70 rounded-xl flex items-center justify-center">
-                    <Award className="w-6 h-6 text-white" />
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <h3 className="text-xl font-semibold text-foreground mb-2">Achievement Focus</h3>
-                  <p className="text-muted-foreground">Celebrate milestones and stay motivated throughout your journey</p>
-                </CardContent>
-              </Card> */}
-            {/* </div> */}
+   
