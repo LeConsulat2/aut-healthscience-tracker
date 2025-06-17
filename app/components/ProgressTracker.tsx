@@ -14,7 +14,7 @@ import { pdfjs } from "react-pdf";
 
 import type { TextItem, PDFDocumentProxy } from "pdfjs-dist/types/src/display/api";
 
-
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 // Enhanced transcript upload component
 function TranscriptUpload({
